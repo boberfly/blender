@@ -95,7 +95,7 @@ ccl_device_forceinline void integrate_surface_emission(INTEGRATOR_STATE_CONST_AR
   }
 
   const float3 throughput = INTEGRATOR_STATE(path, throughput);
-  kernel_accum_emission(INTEGRATOR_STATE_PASS, throughput, L, render_buffer);
+  kernel_accum_emission(INTEGRATOR_STATE_PASS, throughput, L, render_buffer, object_lightgroup(kg, sd->object));
 }
 #endif /* __EMISSION__ */
 

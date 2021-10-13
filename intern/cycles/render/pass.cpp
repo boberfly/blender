@@ -78,6 +78,7 @@ const NodeEnum *Pass::get_type_enum()
     pass_type_enum.insert("volume", PASS_VOLUME);
     pass_type_enum.insert("volume_direct", PASS_VOLUME_DIRECT);
     pass_type_enum.insert("volume_indirect", PASS_VOLUME_INDIRECT);
+    pass_type_enum.insert("lightgroup", PASS_LIGHTGROUP);
 
     /* Data passes. */
     pass_type_enum.insert("depth", PASS_DEPTH);
@@ -327,6 +328,11 @@ PassInfo Pass::get_info(const PassType type, const bool include_albedo)
       break;
     case PASS_AOV_VALUE:
       pass_info.num_components = 1;
+      break;
+
+    case PASS_LIGHTGROUP:
+      pass_info.num_components = 4;
+      pass_info.use_exposure = true;
       break;
 
     case PASS_BAKE_PRIMITIVE:

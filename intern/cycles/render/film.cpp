@@ -190,6 +190,7 @@ void Film::device_update(Device *device, DeviceScene *dscene, Scene *scene)
   kfilm->pass_volume_direct = PASS_UNUSED;
   kfilm->pass_volume_indirect = PASS_UNUSED;
   kfilm->pass_shadow = PASS_UNUSED;
+  kfilm->pass_lightgroup = PASS_UNUSED;
 
   /* Mark passes as unused so that the kernel knows the pass is inaccessible. */
   kfilm->pass_denoising_normal = PASS_UNUSED;
@@ -203,6 +204,7 @@ void Film::device_update(Device *device, DeviceScene *dscene, Scene *scene)
   bool have_cryptomatte = false;
   bool have_aov_color = false;
   bool have_aov_value = false;
+  bool have_lightgroup = false;
 
   for (size_t i = 0; i < scene->passes.size(); i++) {
     const Pass *pass = scene->passes[i];
@@ -369,6 +371,12 @@ void Film::device_update(Device *device, DeviceScene *dscene, Scene *scene)
           have_aov_value = true;
         }
         break;
+      case PASS_LIGHTGROUP:
+        kfilm->pass_lightgroup = have_lightgroup ?
+                                    min(kfilm->pass_lightgroup, kfilm->pass_stride) :
+                                    kfilm->pass_stride;
+        have_lightgroup = true;
+        break;
       default:
         assert(false);
         break;
@@ -390,6 +398,7 @@ void Film::device_update(Device *device, DeviceScene *dscene, Scene *scene)
 
   kfilm->cryptomatte_passes = cryptomatte_passes;
   kfilm->cryptomatte_depth = cryptomatte_depth;
+  //kfilm->num_lightgroups = min(num_lightgroups, LIGHTGROUPS_MAX);
 
   clear_modified();
 }
@@ -423,6 +432,24 @@ int Film::get_aov_offset(Scene *scene, string name, bool &is_color)
   }
 
   return -1;
+}
+
+bool Film::update_lightgroups(Scene *scene)
+{
+  map<ustring, uint> lightgroups;
+  int i = 0;
+  foreach (const Pass *pass, scene->passes) {
+    if (pass->get_type() == PASS_LIGHTGROUP) {
+      lightgroups[pass->get_name()] = i;
+      ++i;
+    }
+  }
+  if (scene->lightgroups != lightgroups) {
+    scene->lightgroups = lightgroups;
+    return true;
+  }
+
+  return false;
 }
 
 void Film::update_passes(Scene *scene, bool add_sample_count_pass)

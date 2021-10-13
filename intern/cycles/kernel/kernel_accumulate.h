@@ -316,7 +316,8 @@ ccl_device_inline void kernel_accum_emission_or_background_pass(INTEGRATOR_STATE
                                                                 float3 contribution,
                                                                 ccl_global float *ccl_restrict
                                                                     buffer,
-                                                                const int pass)
+                                                                const int pass,
+                                                                const int lightgroup = LIGHTGROUP_NONE)
 {
   if (!(kernel_data.film.light_pass_flag & PASS_ANY)) {
     return;
@@ -377,12 +378,18 @@ ccl_device_inline void kernel_accum_emission_or_background_pass(INTEGRATOR_STATE
   if (pass_offset != PASS_UNUSED) {
     kernel_write_pass_float3(buffer + pass_offset, contribution);
   }
+
+  /* Write lightgroup pass. */
+  if (lightgroup != LIGHTGROUP_NONE && kernel_data.film.pass_lightgroup != PASS_UNUSED) {
+    kernel_write_pass_float3(buffer + kernel_data.film.pass_lightgroup + 4 * lightgroup, contribution);
+  }
 #endif /* __PASSES__ */
 }
 
 /* Write light contribution to render buffer. */
 ccl_device_inline void kernel_accum_light(INTEGRATOR_STATE_CONST_ARGS,
-                                          ccl_global float *ccl_restrict render_buffer)
+                                          ccl_global float *ccl_restrict render_buffer,
+                                          const int lightgroup = LIGHTGROUP_NONE)
 {
   /* The throughput for shadow paths already contains the light shader evaluation. */
   float3 contribution = INTEGRATOR_STATE(shadow_path, throughput);
@@ -445,6 +452,11 @@ ccl_device_inline void kernel_accum_light(INTEGRATOR_STATE_CONST_ARGS,
                             kernel_data.film.pass_shadow_scale;
       kernel_write_pass_float3(buffer + kernel_data.film.pass_shadow, shadow);
     }
+
+    /* Write lightgroup pass. */
+    if (lightgroup != LIGHTGROUP_NONE && kernel_data.film.pass_lightgroup != PASS_UNUSED) {
+      kernel_write_pass_float3(buffer + kernel_data.film.pass_lightgroup + 4 * lightgroup, contribution);
+    }
   }
 #endif
 }
@@ -491,14 +503,15 @@ ccl_device_inline void kernel_accum_background(INTEGRATOR_STATE_CONST_ARGS,
         INTEGRATOR_STATE_PASS, contribution, transparent, buffer);
   }
   kernel_accum_emission_or_background_pass(
-      INTEGRATOR_STATE_PASS, contribution, buffer, kernel_data.film.pass_background);
+      INTEGRATOR_STATE_PASS, contribution, buffer, kernel_data.film.pass_background, kernel_data.background.lightgroup);
 }
 
 /* Write emission to render buffer. */
 ccl_device_inline void kernel_accum_emission(INTEGRATOR_STATE_CONST_ARGS,
                                              const float3 throughput,
                                              const float3 L,
-                                             ccl_global float *ccl_restrict render_buffer)
+                                             ccl_global float *ccl_restrict render_buffer,
+                                             const int lightgroup = LIGHTGROUP_NONE)
 {
   float3 contribution = throughput * L;
   kernel_accum_clamp(kg, &contribution, INTEGRATOR_STATE(path, bounce) - 1);
@@ -508,7 +521,7 @@ ccl_device_inline void kernel_accum_emission(INTEGRATOR_STATE_CONST_ARGS,
 
   kernel_accum_combined_pass(INTEGRATOR_STATE_PASS, contribution, buffer);
   kernel_accum_emission_or_background_pass(
-      INTEGRATOR_STATE_PASS, contribution, buffer, kernel_data.film.pass_emission);
+      INTEGRATOR_STATE_PASS, contribution, buffer, kernel_data.film.pass_emission, lightgroup);
 }
 
 CCL_NAMESPACE_END

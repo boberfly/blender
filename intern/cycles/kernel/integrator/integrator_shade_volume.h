@@ -651,7 +651,7 @@ ccl_device_forceinline void volume_integrate_heterogeneous(
   /* Write accumulated emission. */
   if (!is_zero(accum_emission)) {
     kernel_accum_emission(
-        INTEGRATOR_STATE_PASS, result.indirect_throughput, accum_emission, render_buffer);
+        INTEGRATOR_STATE_PASS, result.indirect_throughput, accum_emission, render_buffer, object_lightgroup(kg, sd->object));
   }
 
 #  ifdef __DENOISING_FEATURES__
