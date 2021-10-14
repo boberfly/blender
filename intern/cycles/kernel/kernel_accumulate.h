@@ -388,8 +388,7 @@ ccl_device_inline void kernel_accum_emission_or_background_pass(INTEGRATOR_STATE
 
 /* Write light contribution to render buffer. */
 ccl_device_inline void kernel_accum_light(INTEGRATOR_STATE_CONST_ARGS,
-                                          ccl_global float *ccl_restrict render_buffer,
-                                          const int lightgroup = LIGHTGROUP_NONE)
+                                          ccl_global float *ccl_restrict render_buffer)
 {
   /* The throughput for shadow paths already contains the light shader evaluation. */
   float3 contribution = INTEGRATOR_STATE(shadow_path, throughput);
@@ -454,6 +453,7 @@ ccl_device_inline void kernel_accum_light(INTEGRATOR_STATE_CONST_ARGS,
     }
 
     /* Write lightgroup pass. */
+    const int lightgroup = INTEGRATOR_STATE(shadow_path, lightgroup);
     if (lightgroup != LIGHTGROUP_NONE && kernel_data.film.pass_lightgroup != PASS_UNUSED) {
       kernel_write_pass_float3(buffer + kernel_data.film.pass_lightgroup + 4 * lightgroup, contribution);
     }

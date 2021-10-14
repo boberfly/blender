@@ -200,6 +200,10 @@ ccl_device_forceinline void integrate_surface_direct_light(INTEGRATOR_STATE_ARGS
     INTEGRATOR_STATE_WRITE(shadow_path, unshadowed_throughput) = throughput;
   }
 
+  if (is_light) {
+    INTEGRATOR_STATE_WRITE(shadow_path, lightgroup) = ls.group;
+  }
+
   /* Branch off shadow kernel. */
   INTEGRATOR_SHADOW_PATH_INIT(DEVICE_KERNEL_INTEGRATOR_INTERSECT_SHADOW);
 }
