@@ -693,6 +693,20 @@ void BlenderSync::sync_render_passes(BL::RenderLayer &b_rlay, BL::ViewLayer &b_v
     }
   }
 
+  /* Light Group passes. */
+  BL::ViewLayer::lightgroups_iterator b_lightgroup_iter;
+  for (b_view_layer.lightgroups.begin(b_lightgroup_iter); b_lightgroup_iter != b_view_layer.lightgroups.end(); ++b_lightgroup_iter) {
+    BL::Lightgroup b_lightgroup(*b_lightgroup_iter);
+    if (!b_lightgroup.is_valid()) {
+      continue;
+    }
+
+    string name = b_lightgroup.name();
+
+    b_engine.add_pass(name.c_str(), 3, "RGB", b_view_layer.name().c_str());
+    pass_add(scene, PASS_LIGHTGROUP, name.c_str());
+  }
+
   scene->film->set_pass_alpha_threshold(b_view_layer.pass_alpha_threshold());
 }
 

@@ -940,6 +940,12 @@ class CyclesLightSettings(bpy.types.PropertyGroup):
         "note that this will make the light invisible",
         default=False,
     )
+    lightgroup: StringProperty(
+        name="Light Group",
+        description="Assign a lightgroup to the light, "
+        "note that the name needs to match to an accompanying pass",
+        default="",
+    )
 
     @classmethod
     def register(cls):
@@ -999,6 +1005,12 @@ class CyclesWorldSettings(bpy.types.PropertyGroup):
                     "(lower values give more accurate and detailed results, but also increased render time)",
         default=1.0,
         min=0.0000001, max=100000.0, soft_min=0.1, soft_max=100.0, precision=4
+    )
+    lightgroup: StringProperty(
+        name="Light Group",
+        description="Assign a lightgroup to the background, "
+        "note that the name needs to match to an accompanying pass",
+        default="",
     )
 
     @classmethod
@@ -1152,6 +1164,13 @@ class CyclesObjectSettings(bpy.types.PropertyGroup):
         min=0.0,
         default=0.0,
         subtype='DISTANCE',
+    )
+
+    lightgroup: StringProperty(
+        name="Light Group",
+        description="Assign a lightgroup to the object, "
+        "note that the name needs to match to an accompanying pass",
+        default="",
     )
 
     @classmethod
