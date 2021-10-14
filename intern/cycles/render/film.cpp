@@ -398,7 +398,6 @@ void Film::device_update(Device *device, DeviceScene *dscene, Scene *scene)
 
   kfilm->cryptomatte_passes = cryptomatte_passes;
   kfilm->cryptomatte_depth = cryptomatte_depth;
-  //kfilm->num_lightgroups = min(num_lightgroups, LIGHTGROUPS_MAX);
 
   clear_modified();
 }

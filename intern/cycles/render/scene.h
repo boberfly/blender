@@ -200,7 +200,7 @@ class Scene : public NodeOwner {
   /* Optional name. Is used for logging and reporting. */
   string name;
 
-  /* Light group set. */
+  /* Light group map. */
   map<ustring, uint> lightgroups;
 
   /* data */

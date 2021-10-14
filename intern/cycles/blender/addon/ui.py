@@ -1109,6 +1109,8 @@ class CYCLES_OBJECT_PT_lightgroup(CyclesButtonsPanel, Panel):
         ob = context.object
         cob = ob.cycles
 
+        layout.active = ob.type != "LIGHT"
+
         col = layout.column(align=True)
         col.prop(cob, "lightgroup", text="Light Group")       
 
