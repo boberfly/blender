@@ -124,6 +124,7 @@ NODE_DEFINE(Pass)
   SOCKET_ENUM(mode, "Mode", *pass_mode_enum, static_cast<int>(PassMode::DENOISED));
   SOCKET_STRING(name, "Name", ustring());
   SOCKET_BOOLEAN(include_albedo, "Include Albedo", false);
+  SOCKET_STRING(lightgroup, "Light Group", ustring());
 
   return type;
 }
@@ -134,7 +135,7 @@ Pass::Pass() : Node(get_node_type()), is_auto_(false)
 
 PassInfo Pass::get_info() const
 {
-  return get_info(type, include_albedo);
+  return get_info(type, include_albedo, (lightgroup == ustring()) ? false : true);
 }
 
 bool Pass::is_written() const
@@ -142,7 +143,7 @@ bool Pass::is_written() const
   return get_info().is_written;
 }
 
-PassInfo Pass::get_info(const PassType type, const bool include_albedo)
+PassInfo Pass::get_info(const PassType type, const bool include_albedo, const bool lightgroup)
 {
   PassInfo pass_info;
 
@@ -157,9 +158,9 @@ PassInfo Pass::get_info(const PassType type, const bool include_albedo)
       pass_info.num_components = 0;
       break;
     case PASS_COMBINED:
-      pass_info.num_components = 4;
+      pass_info.num_components = (!lightgroup) ? 4 : 3;
       pass_info.use_exposure = true;
-      pass_info.support_denoise = true;
+      pass_info.support_denoise = (!lightgroup) ? true : false;
       break;
     case PASS_DEPTH:
       pass_info.num_components = 1;
@@ -369,14 +370,15 @@ const Pass *Pass::find(const vector<Pass *> &passes, const string &name)
   return nullptr;
 }
 
-const Pass *Pass::find(const vector<Pass *> &passes, PassType type, PassMode mode)
+const Pass *Pass::find(const vector<Pass *> &passes, PassType type, PassMode mode, const string &lightgroup)
 {
   for (const Pass *pass : passes) {
     if (pass->get_type() != type || pass->get_mode() != mode) {
       continue;
     }
-
-    return pass;
+    if (pass->get_lightgroup() == lightgroup) {
+      return pass;
+    }
   }
 
   return nullptr;
