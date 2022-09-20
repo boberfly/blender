@@ -6,6 +6,7 @@
 
 #include "hydra/config.h"
 #include "scene/attribute.h"
+#include "scene/mesh.h"
 
 #include <pxr/base/vt/value.h>
 #include <pxr/imaging/hd/types.h>
@@ -17,5 +18,9 @@ void ApplyPrimvars(CCL_NS::AttributeSet &attributes,
                    PXR_NS::VtValue value,
                    CCL_NS::AttributeElement elem,
                    CCL_NS::AttributeStandard std);
+
+void ApplyTangents(CCL_NS::Mesh *mesh,
+                   const CCL_NS::ustring &name,
+                   const bool needSign);
 
 HDCYCLES_NAMESPACE_CLOSE_SCOPE

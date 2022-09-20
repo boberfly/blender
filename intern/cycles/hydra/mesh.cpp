@@ -337,6 +337,14 @@ void HdCyclesMesh::PopulatePrimvars(HdSceneDelegate *sceneDelegate)
           _instances[0]->set_color(make_float3(color[0], color[1], color[2]));
         }
       }
+      else if (interpolation.first == HdInterpolationFaceVarying) {
+        if (string_endswith(name.c_str(), "tangent") && desc.role == HdPrimvarRoleTokens->vector) {
+          std = ATTR_STD_UV_TANGENT;
+        }
+        else if (string_endswith(name.c_str(), "tangent_sign")) {
+          std = ATTR_STD_UV_TANGENT_SIGN;
+        }
+      }
 
       // Skip attributes that are not needed
       if ((std != ATTR_STD_NONE && _geom->need_attribute(scene, std)) ||
@@ -360,6 +368,25 @@ void HdCyclesMesh::PopulatePrimvars(HdSceneDelegate *sceneDelegate)
         }
 
         ApplyPrimvars(attributes, name, value, interpolation.second, std);
+      }
+    }
+  }
+
+  // Generate any tangents + sign with MikkT
+  for (const auto &interpolation : interpolations) {
+    for (const HdPrimvarDescriptor &desc :
+         GetPrimvarDescriptors(sceneDelegate, interpolation.first)) {
+      const ustring name(desc.name.GetString());
+      if (desc.role != HdPrimvarRoleTokens->textureCoordinate || !attributes.find(name)) {
+        continue;
+      }
+
+      const ustring nameTangent(string(name.c_str()) + ".tangent");
+      const ustring nameSign(string(nameTangent.c_str()) + "_sign");
+
+      if (!attributes.find(nameTangent) && _geom->need_attribute(scene, nameTangent)) {
+        bool needSign = (!attributes.find(nameSign) && _geom->need_attribute(scene, nameSign));
+        ApplyTangents(_geom, name, needSign);
       }
     }
   }

@@ -387,8 +387,10 @@ endif()
 
 if(CYCLES_STANDALONE_REPOSITORY)
   include_directories(../third_party/atomic)
+  include_directories(../third_party/mikktspace)
 else()
   include_directories(../atomic)
+  include_directories(../mikktspace)
 endif()
 
 # Warnings
