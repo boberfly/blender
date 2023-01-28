@@ -50,9 +50,6 @@ class Geometry : public Node {
   /* Attributes */
   AttributeSet attributes;
 
-  /* Shaders */
-  NODE_SOCKET_API_ARRAY(array<Node *>, used_shaders)
-
   /* Transform */
   BoundBox bounds;
   bool transform_applied;
@@ -82,20 +79,24 @@ class Geometry : public Node {
   /* Index into scene->geometry (only valid during update) */
   size_t index;
 
+  /* Object instancing prototype (optimisation for accessing used shaders) */
+  Node *prototype;
+
   /* Constructor/Destructor */
   explicit Geometry(const NodeType *node_type, const Type type);
   virtual ~Geometry();
 
   /* Geometry */
-  virtual void clear(bool preserve_shaders = false);
+  virtual void clear();
   virtual void compute_bounds() = 0;
   virtual void apply_transform(const Transform &tfm, const bool apply_to_motion) = 0;
+
+  /* Get used shaders */
+  const array<Node *> get_used_shaders() const;
 
   /* Attribute Requests */
   bool need_attribute(Scene *scene, AttributeStandard std);
   bool need_attribute(Scene *scene, ustring name);
-
-  AttributeRequestSet needed_attributes();
 
   /* UDIM */
   virtual void get_uv_tiles(ustring map, unordered_set<int> &tiles) = 0;

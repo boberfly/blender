@@ -269,7 +269,7 @@ void Mesh::reserve_subd_creases(size_t num_creases)
 
 void Mesh::clear_non_sockets()
 {
-  Geometry::clear(true);
+  Geometry::clear();
 
   num_subd_verts = 0;
   num_subd_faces = 0;
@@ -281,9 +281,9 @@ void Mesh::clear_non_sockets()
   patch_table = NULL;
 }
 
-void Mesh::clear(bool preserve_shaders, bool preserve_voxel_data)
+void Mesh::clear(bool preserve_voxel_data)
 {
-  Geometry::clear(preserve_shaders);
+  Geometry::clear();
 
   /* clear all verts and triangles */
   verts.clear();
@@ -312,9 +312,9 @@ void Mesh::clear(bool preserve_shaders, bool preserve_voxel_data)
   clear_non_sockets();
 }
 
-void Mesh::clear(bool preserve_shaders)
+void Mesh::clear()
 {
-  clear(preserve_shaders, false);
+  clear(false);
 }
 
 void Mesh::add_vertex(float3 P)
@@ -683,7 +683,7 @@ void Mesh::add_undisplaced()
   }
 }
 
-void Mesh::pack_shaders(Scene *scene, uint *tri_shader)
+void Mesh::pack_shaders(uint8_t *tri_shader_index, uint num_used_shaders)
 {
   uint shader_id = 0;
   uint last_shader = -1;
@@ -700,13 +700,15 @@ void Mesh::pack_shaders(Scene *scene, uint *tri_shader)
     if (new_shader != last_shader || last_smooth != new_smooth) {
       last_shader = new_shader;
       last_smooth = new_smooth;
-      Shader *shader = (last_shader < used_shaders.size()) ?
-                           static_cast<Shader *>(used_shaders[last_shader]) :
-                           scene->default_surface;
-      shader_id = scene->shader_manager->get_shader_id(shader, last_smooth);
+      shader_id = (last_shader < num_used_shaders) ?
+                      last_shader + 1 : // +1 as the first shader is default_surface
+                      0; // scene->default_surface
+      if (last_smooth) {
+        shader_id |= SHADER_COMPACT_SMOOTH_NORMAL;
+      }
     }
 
-    tri_shader[i] = shader_id;
+    tri_shader_index[i] = (uint8_t)shader_id;
   }
 }
 

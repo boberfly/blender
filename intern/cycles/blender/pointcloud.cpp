@@ -261,10 +261,8 @@ void BlenderSync::sync_pointcloud(PointCloud *pointcloud, BObjectInfo &b_ob_info
 {
   size_t old_numpoints = pointcloud->num_points();
 
-  array<Node *> used_shaders = pointcloud->get_used_shaders();
-
   PointCloud new_pointcloud;
-  new_pointcloud.set_used_shaders(used_shaders);
+  new_pointcloud.prototype = pointcloud->prototype;
 
   /* TODO: add option to filter out points in the view layer. */
   BL::PointCloud b_pointcloud(b_ob_info.object_data);
@@ -279,8 +277,7 @@ void BlenderSync::sync_pointcloud(PointCloud *pointcloud, BObjectInfo &b_ob_info
   /* update original sockets */
   for (const SocketType &socket : new_pointcloud.type->inputs) {
     /* Those sockets are updated in sync_object, so do not modify them. */
-    if (socket.name == "use_motion_blur" || socket.name == "motion_steps" ||
-        socket.name == "used_shaders") {
+    if (socket.name == "use_motion_blur" || socket.name == "motion_steps") {
       continue;
     }
     pointcloud->set_value(socket, new_pointcloud, socket);

@@ -797,27 +797,27 @@ void AlembicProcedural::generate(Scene *scene, Progress &progress)
   bool need_data_updates = false;
 
   foreach (Node *object_node, objects) {
-    AlembicObject *object = static_cast<AlembicObject *>(object_node);
+    AlembicObject *abc_object = static_cast<AlembicObject *>(object_node);
 
-    if (object->is_modified()) {
+    if (abc_object->is_modified()) {
       need_data_updates = true;
     }
 
     /* Check if the shaders were modified. */
-    if (object->used_shaders_is_modified() && object->get_object() &&
-        object->get_object()->get_geometry()) {
-      Geometry *geometry = object->get_object()->get_geometry();
-      array<Node *> used_shaders = object->get_used_shaders();
-      geometry->set_used_shaders(used_shaders);
+    if (abc_object->used_shaders_is_modified() && abc_object->get_object() &&
+        abc_object->get_object()->get_geometry()) {
+      Object *object = abc_object->get_object();
+      array<Node *> used_shaders = abc_object->get_used_shaders();
+      object->set_used_shaders(used_shaders);
       need_shader_updates = true;
     }
 
     /* Check for changes in shaders (e.g. newly requested attributes). */
-    foreach (Node *shader_node, object->get_used_shaders()) {
+    foreach (Node *shader_node, abc_object->get_used_shaders()) {
       Shader *shader = static_cast<Shader *>(shader_node);
 
       if (shader->need_update_geometry()) {
-        object->need_shader_update = true;
+        abc_object->need_shader_update = true;
         need_shader_updates = true;
       }
     }
@@ -1002,15 +1002,15 @@ void AlembicProcedural::load_objects(Progress &progress)
 
       geometry->set_owner(this);
       geometry->name = abc_object->iobject.getName();
-
-      array<Node *> used_shaders = abc_object->get_used_shaders();
-      geometry->set_used_shaders(used_shaders);
     }
 
     Object *object = scene_->create_node<Object>();
     object->set_owner(this);
     object->set_geometry(geometry);
     object->name = abc_object->iobject.getName();
+
+    array<Node *> used_shaders = abc_object->get_used_shaders();
+    object->set_used_shaders(used_shaders);
 
     abc_object->set_object(object);
   }
@@ -1048,7 +1048,7 @@ void AlembicProcedural::read_mesh(AlembicObject *abc_object, Abc::chrono_t frame
   Mesh *mesh = static_cast<Mesh *>(object->get_geometry());
 
   /* Make sure shader ids are also updated. */
-  if (mesh->used_shaders_is_modified()) {
+  if (object->used_shaders_is_modified()) {
     mesh->tag_shader_modified();
   }
 
@@ -1117,7 +1117,7 @@ void AlembicProcedural::read_subd(AlembicObject *abc_object, Abc::chrono_t frame
   Mesh *mesh = static_cast<Mesh *>(object->get_geometry());
 
   /* Make sure shader ids are also updated. */
-  if (mesh->used_shaders_is_modified()) {
+  if (object->used_shaders_is_modified()) {
     mesh->tag_shader_modified();
   }
 
@@ -1210,7 +1210,7 @@ void AlembicProcedural::read_curves(AlembicObject *abc_object, Abc::chrono_t fra
   Hair *hair = static_cast<Hair *>(object->get_geometry());
 
   /* Make sure shader ids are also updated. */
-  if (hair->used_shaders_is_modified()) {
+  if (object->used_shaders_is_modified()) {
     hair->tag_curve_shader_modified();
   }
 
@@ -1251,7 +1251,7 @@ void AlembicProcedural::read_points(AlembicObject *abc_object, Abc::chrono_t fra
   PointCloud *point_cloud = static_cast<PointCloud *>(object->get_geometry());
 
   /* Make sure shader ids are also updated. */
-  if (point_cloud->used_shaders_is_modified()) {
+  if (object->used_shaders_is_modified()) {
     point_cloud->tag_shader_modified();
   }
 

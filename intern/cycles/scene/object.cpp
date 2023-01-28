@@ -101,6 +101,8 @@ NODE_DEFINE(Object)
 
   SOCKET_STRING(lightgroup, "Light Group", ustring());
 
+  SOCKET_NODE_ARRAY(used_shaders, "Shaders", Shader::get_node_type());
+
   return type;
 }
 
@@ -230,7 +232,7 @@ void Object::tag_update(Scene *scene)
       flag |= ObjectManager::VISIBILITY_MODIFIED;
     }
 
-    foreach (Node *node, geometry->get_used_shaders()) {
+    foreach (Node *node, get_used_shaders()) {
       Shader *shader = static_cast<Shader *>(node);
       if (shader->emission_sampling != EMISSION_SAMPLING_NONE)
         scene->light_manager->tag_update(scene, LightManager::EMISSIVE_MESH_MODIFIED);
@@ -294,7 +296,7 @@ float Object::compute_volume_step_size() const
   /* Compute step rate from shaders. */
   float step_rate = FLT_MAX;
 
-  foreach (Node *node, mesh->get_used_shaders()) {
+  foreach (Node *node, get_used_shaders()) {
     Shader *shader = static_cast<Shader *>(node);
     if (shader->has_volume) {
       if ((shader->get_heterogeneous_volume() && shader->has_volume_spatial_varying) ||
@@ -370,6 +372,24 @@ float Object::compute_volume_step_size() const
 int Object::get_device_index() const
 {
   return index;
+}
+
+AttributeRequestSet Object::needed_attributes()
+{
+  AttributeRequestSet result;
+
+  foreach (Node *node, get_used_shaders()) {
+    Shader *shader = static_cast<Shader *>(node);
+    result.add(shader->attributes);
+  }
+
+  return result;
+}
+
+void Object::set_geometry_and_prototype(Geometry *geometry)
+{
+  geometry->prototype = this;
+  set_geometry(geometry);
 }
 
 /* Object Manager */
@@ -696,6 +716,7 @@ void ObjectManager::device_update(Device *device,
     dscene->object_motion.tag_realloc();
     dscene->object_flag.tag_realloc();
     dscene->object_volume_step.tag_realloc();
+    dscene->object_used_shaders.tag_realloc();
   }
 
   if (update_flags & HOLDOUT_MODIFIED) {
@@ -733,6 +754,7 @@ void ObjectManager::device_update(Device *device,
         dscene->object_motion.tag_modified();
         dscene->object_flag.tag_modified();
         dscene->object_volume_step.tag_modified();
+        dscene->object_used_shaders.tag_modified();
       }
     }
   }
@@ -766,6 +788,9 @@ void ObjectManager::device_update(Device *device,
     progress.set_status("Updating Objects", "Applying Static Transformations");
     apply_static_transforms(dscene, scene, progress);
   }
+
+  progress.set_status("Updating Objects", "Applying used shaders to device");
+  device_update_used_shaders(dscene, scene);
 
   foreach (Object *object, scene->objects) {
     object->clear_modified();
@@ -906,6 +931,53 @@ void ObjectManager::device_update_geom_offsets(Device *, DeviceScene *dscene, Sc
   }
 }
 
+void ObjectManager::device_update_used_shaders(DeviceScene *dscene, Scene *scene)
+{
+  if (dscene->objects.size() == 0) {
+    return;
+  }
+
+  bool update = false;
+
+  if (dscene->object_used_shaders.is_modified()) {
+
+    KernelObject *kobjects = dscene->objects.data();
+
+    int size = 0;
+    foreach (Object *object, scene->objects) {
+      if (object->get_geometry()->is_mesh() ) {
+        kobjects[object->index].used_shaders_offset = size;
+        size += object->get_used_shaders().size();
+      }
+    }
+
+    dscene->object_used_shaders.alloc(size);
+    update = true;
+    dscene->objects.copy_to_device();
+  }
+
+  uint *kshaders = dscene->object_used_shaders.data();
+
+  int offset = 0;
+  foreach (Object *object, scene->objects) {
+    if (object->get_geometry()->is_mesh() ) {
+      for (size_t i = 0; i < object->get_used_shaders().size(); i++) {
+        int shader_id = scene->shader_manager->get_shader_id((Shader *)object->get_used_shaders()[i]);
+        if (kshaders[offset] != shader_id) {
+          kshaders[offset] = shader_id;
+          update = true;
+        }
+        ++offset;
+      }
+    }
+  }
+
+  if (update) {
+    dscene->object_used_shaders.copy_to_device();
+  }
+  dscene->object_used_shaders.clear_modified();
+}
+
 void ObjectManager::device_free(Device *, DeviceScene *dscene, bool force_free)
 {
   dscene->objects.free_if_need_realloc(force_free);
@@ -914,6 +986,7 @@ void ObjectManager::device_free(Device *, DeviceScene *dscene, bool force_free)
   dscene->object_flag.free_if_need_realloc(force_free);
   dscene->object_volume_step.free_if_need_realloc(force_free);
   dscene->object_prim_offset.free_if_need_realloc(force_free);
+  dscene->object_used_shaders.free_if_need_realloc(force_free);
 }
 
 void ObjectManager::apply_static_transforms(DeviceScene *dscene, Scene *scene, Progress &progress)

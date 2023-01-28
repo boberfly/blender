@@ -191,7 +191,7 @@ void HdCyclesCurves::PopulatePrimvars(HdSceneDelegate *sceneDelegate)
 void HdCyclesCurves::PopulateTopology(HdSceneDelegate *sceneDelegate)
 {
   // Clear geometry before populating it again with updated topology
-  _geom->clear(true);
+  _geom->clear();
 
   HdBasisCurvesTopology topology = GetBasisCurvesTopology(sceneDelegate);
 

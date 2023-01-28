@@ -70,7 +70,7 @@ class DeviceScene {
 
   /* mesh */
   device_vector<packed_float3> tri_verts;
-  device_vector<uint> tri_shader;
+  device_vector<uint8_t> tri_shader_index;
   device_vector<packed_float3> tri_vnormal;
   device_vector<uint4> tri_vindex;
   device_vector<uint> tri_patch;
@@ -93,6 +93,7 @@ class DeviceScene {
   device_vector<uint> object_flag;
   device_vector<float> object_volume_step;
   device_vector<uint> object_prim_offset;
+  device_vector<uint> object_used_shaders;
 
   /* cameras */
   device_vector<DecomposedTransform> camera_motion;

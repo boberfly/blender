@@ -43,7 +43,6 @@ NODE_ABSTRACT_DEFINE(Geometry)
 
   SOCKET_UINT(motion_steps, "Motion Steps", 3);
   SOCKET_BOOLEAN(use_motion_blur, "Use Motion Blur", false);
-  SOCKET_NODE_ARRAY(used_shaders, "Shaders", Shader::get_node_type());
 
   return type;
 }
@@ -65,6 +64,8 @@ Geometry::Geometry(const NodeType *node_type, const Type type)
   bvh = NULL;
   attr_map_offset = 0;
   prim_offset = 0;
+
+  prototype = NULL;
 }
 
 Geometry::~Geometry()
@@ -73,15 +74,23 @@ Geometry::~Geometry()
   delete bvh;
 }
 
-void Geometry::clear(bool preserve_shaders)
+void Geometry::clear()
 {
-  if (!preserve_shaders)
-    used_shaders.clear();
-
   transform_applied = false;
   transform_negative_scaled = false;
   transform_normal = transform_identity();
   tag_modified();
+}
+
+const array<Node *> Geometry::get_used_shaders() const
+{
+  if (prototype) {
+    Object *object = static_cast<Object *>(prototype);
+    return object->get_used_shaders();
+  }
+
+  array<Node *> empty;
+  return empty;
 }
 
 bool Geometry::need_attribute(Scene *scene, AttributeStandard std)
@@ -92,7 +101,7 @@ bool Geometry::need_attribute(Scene *scene, AttributeStandard std)
   if (scene->need_global_attribute(std))
     return true;
 
-  foreach (Node *node, used_shaders) {
+  foreach (Node *node, get_used_shaders()) {
     Shader *shader = static_cast<Shader *>(node);
     if (shader->attributes.find(std))
       return true;
@@ -106,25 +115,13 @@ bool Geometry::need_attribute(Scene * /*scene*/, ustring name)
   if (name == ustring())
     return false;
 
-  foreach (Node *node, used_shaders) {
+  foreach (Node *node, get_used_shaders()) {
     Shader *shader = static_cast<Shader *>(node);
     if (shader->attributes.find(name))
       return true;
   }
 
   return false;
-}
-
-AttributeRequestSet Geometry::needed_attributes()
-{
-  AttributeRequestSet result;
-
-  foreach (Node *node, used_shaders) {
-    Shader *shader = static_cast<Shader *>(node);
-    result.add(shader->attributes);
-  }
-
-  return result;
 }
 
 float Geometry::motion_time(int step) const
@@ -172,7 +169,7 @@ bool Geometry::is_instanced() const
 
 bool Geometry::has_true_displacement() const
 {
-  foreach (Node *node, used_shaders) {
+  foreach (Node *node, get_used_shaders()) {
     Shader *shader = static_cast<Shader *>(node);
     if (shader->has_displacement && shader->get_displacement_method() != DISPLACE_BUMP) {
       return true;
@@ -270,9 +267,8 @@ void Geometry::tag_update(Scene *scene, bool rebuild)
   if (rebuild) {
     need_update_rebuild = true;
     scene->light_manager->tag_update(scene, LightManager::MESH_NEED_REBUILD);
-  }
-  else {
-    foreach (Node *node, used_shaders) {
+  } else {
+    foreach (Node *node, get_used_shaders()) {
       Shader *shader = static_cast<Shader *>(node);
       if (shader->emission_sampling != EMISSION_SAMPLING_NONE) {
         scene->light_manager->tag_update(scene, LightManager::EMISSIVE_MESH_MODIFIED);
@@ -1096,13 +1092,13 @@ void GeometryManager::device_update_mesh(Device *,
     progress.set_status("Updating Mesh", "Computing normals");
 
     packed_float3 *tri_verts = dscene->tri_verts.alloc(tri_size * 3);
-    uint *tri_shader = dscene->tri_shader.alloc(tri_size);
+    uint8_t *tri_shader_index = dscene->tri_shader_index.alloc(tri_size);
     packed_float3 *vnormal = dscene->tri_vnormal.alloc(vert_size);
     uint4 *tri_vindex = dscene->tri_vindex.alloc(tri_size);
     uint *tri_patch = dscene->tri_patch.alloc(tri_size);
     float2 *tri_patch_uv = dscene->tri_patch_uv.alloc(vert_size);
 
-    const bool copy_all_data = dscene->tri_shader.need_realloc() ||
+    const bool copy_all_data = dscene->tri_shader_index.need_realloc() ||
                                dscene->tri_vindex.need_realloc() ||
                                dscene->tri_vnormal.need_realloc() ||
                                dscene->tri_patch.need_realloc() ||
@@ -1114,7 +1110,7 @@ void GeometryManager::device_update_mesh(Device *,
 
         if (mesh->shader_is_modified() || mesh->smooth_is_modified() ||
             mesh->triangles_is_modified() || copy_all_data) {
-          mesh->pack_shaders(scene, &tri_shader[mesh->prim_offset]);
+          mesh->pack_shaders(&tri_shader_index[mesh->prim_offset], mesh->get_used_shaders().size());
         }
 
         if (mesh->verts_is_modified() || copy_all_data) {
@@ -1138,7 +1134,7 @@ void GeometryManager::device_update_mesh(Device *,
     progress.set_status("Updating Mesh", "Copying Mesh to device");
 
     dscene->tri_verts.copy_to_device_if_modified();
-    dscene->tri_shader.copy_to_device_if_modified();
+    dscene->tri_shader_index.copy_to_device_if_modified();
     dscene->tri_vnormal.copy_to_device_if_modified();
     dscene->tri_vindex.copy_to_device_if_modified();
     dscene->tri_patch.copy_to_device_if_modified();
@@ -1584,7 +1580,7 @@ void GeometryManager::device_update_preprocess(Device *device, Scene *scene, Pro
       dscene->tri_vindex.tag_realloc();
       dscene->tri_patch.tag_realloc();
       dscene->tri_patch_uv.tag_realloc();
-      dscene->tri_shader.tag_realloc();
+      dscene->tri_shader_index.tag_realloc();
       dscene->patches.tag_realloc();
     }
 
@@ -1649,7 +1645,7 @@ void GeometryManager::device_update_preprocess(Device *device, Scene *scene, Pro
      * these are the only arrays that can be updated */
     dscene->tri_verts.tag_modified();
     dscene->tri_vnormal.tag_modified();
-    dscene->tri_shader.tag_modified();
+    dscene->tri_shader_index.tag_modified();
   }
 
   if (device_update_flags & DEVICE_CURVE_DATA_MODIFIED) {
@@ -2115,7 +2111,7 @@ void GeometryManager::device_update(Device *device,
   dscene->prim_object.clear_modified();
   dscene->prim_time.clear_modified();
   dscene->tri_verts.clear_modified();
-  dscene->tri_shader.clear_modified();
+  dscene->tri_shader_index.clear_modified();
   dscene->tri_vindex.clear_modified();
   dscene->tri_patch.clear_modified();
   dscene->tri_vnormal.clear_modified();
@@ -2145,7 +2141,7 @@ void GeometryManager::device_free(Device *device, DeviceScene *dscene, bool forc
   dscene->prim_object.free_if_need_realloc(force_free);
   dscene->prim_time.free_if_need_realloc(force_free);
   dscene->tri_verts.free_if_need_realloc(force_free);
-  dscene->tri_shader.free_if_need_realloc(force_free);
+  dscene->tri_shader_index.free_if_need_realloc(force_free);
   dscene->tri_vnormal.free_if_need_realloc(force_free);
   dscene->tri_vindex.free_if_need_realloc(force_free);
   dscene->tri_patch.free_if_need_realloc(force_free);

@@ -342,7 +342,7 @@ static void ExportCurveSegments(Scene *scene, Hair *hair, ParticleCurveData *CDa
   /* check allocation */
   if ((hair->get_curve_keys().size() != num_keys) || (hair->num_curves() != num_curves)) {
     VLOG_WARNING << "Hair memory allocation failed, clearing data.";
-    hair->clear(true);
+    hair->clear();
   }
 }
 
@@ -1043,12 +1043,8 @@ void BlenderSync::sync_hair(Hair *hair, BObjectInfo &b_ob_info, bool motion, int
 
 void BlenderSync::sync_hair(BL::Depsgraph b_depsgraph, BObjectInfo &b_ob_info, Hair *hair)
 {
-  /* make a copy of the shaders as the caller in the main thread still need them for syncing the
-   * attributes */
-  array<Node *> used_shaders = hair->get_used_shaders();
-
   Hair new_hair;
-  new_hair.set_used_shaders(used_shaders);
+  new_hair.prototype = hair->prototype;
 
   if (view_layer.use_hair) {
     if (b_ob_info.object_data.is_a(&RNA_Curves)) {
@@ -1072,8 +1068,7 @@ void BlenderSync::sync_hair(BL::Depsgraph b_depsgraph, BObjectInfo &b_ob_info, H
 
   for (const SocketType &socket : new_hair.type->inputs) {
     /* Those sockets are updated in sync_object, so do not modify them. */
-    if (socket.name == "use_motion_blur" || socket.name == "motion_steps" ||
-        socket.name == "used_shaders") {
+    if (socket.name == "use_motion_blur" || socket.name == "motion_steps") {
       continue;
     }
     hair->set_value(socket, new_hair, socket);

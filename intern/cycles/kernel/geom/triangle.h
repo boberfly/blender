@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "kernel/util/fetch_shader.h"
+
 CCL_NAMESPACE_BEGIN
 
 /* Normal on triangle. */
@@ -57,7 +59,7 @@ ccl_device_inline void triangle_point_normal(KernelGlobals kg,
     *Ng = normalize(cross(v1 - v0, v2 - v0));
   }
   /* shader`*/
-  *shader = kernel_data_fetch(tri_shader, prim);
+  *shader = triangle_fetch_shader(kg, object, prim);
 }
 
 /* Triangle vertex locations */

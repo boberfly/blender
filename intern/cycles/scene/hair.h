@@ -93,7 +93,7 @@ class Hair : public Geometry {
   ~Hair();
 
   /* Geometry */
-  void clear(bool preserve_shaders = false) override;
+  void clear() override;
 
   void resize_curves(int numcurves, int numkeys);
   void reserve_curves(int numcurves, int numkeys);

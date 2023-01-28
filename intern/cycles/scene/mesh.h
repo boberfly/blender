@@ -195,7 +195,7 @@ class Mesh : public Geometry {
   void reserve_subd_faces(int numfaces, int num_ngons, int numcorners);
   void reserve_subd_creases(size_t num_creases);
   void clear_non_sockets();
-  void clear(bool preserve_shaders = false) override;
+  void clear() override;
   void add_vertex(float3 P);
   void add_vertex_slow(float3 P);
   void add_triangle(int v0, int v1, int v2, int shader, bool smooth);
@@ -213,7 +213,7 @@ class Mesh : public Geometry {
 
   void get_uv_tiles(ustring map, unordered_set<int> &tiles) override;
 
-  void pack_shaders(Scene *scene, uint *shader);
+  void pack_shaders(uint8_t *tri_shader_index, uint num_used_shaders);
   void pack_normals(packed_float3 *vnormal);
   void pack_verts(packed_float3 *tri_verts,
                   uint4 *tri_vindex,
@@ -245,7 +245,7 @@ class Mesh : public Geometry {
   }
 
  protected:
-  void clear(bool preserve_shaders, bool preserve_voxel_data);
+  void clear(bool preserve_voxel_data);
 };
 
 CCL_NAMESPACE_END

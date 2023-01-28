@@ -349,7 +349,7 @@ static void sync_volume_object(BL::BlendData &b_data,
 
 void BlenderSync::sync_volume(BObjectInfo &b_ob_info, Volume *volume)
 {
-  volume->clear(true);
+  volume->clear();
 
   if (view_layer.use_volumes) {
     if (b_ob_info.object_data.is_a(&RNA_Volume)) {

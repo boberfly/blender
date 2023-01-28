@@ -9,6 +9,7 @@
 /* included as Object::set_particle_system defined through NODE_SOCKET_API does
  * not select the right Node::set overload as it does not know that ParticleSystem
  * is a Node */
+#include "scene/geometry.h"
 #include "scene/particles.h"
 #include "scene/scene.h"
 
@@ -68,6 +69,9 @@ class Object : public Node {
 
   NODE_SOCKET_API(ustring, lightgroup)
 
+  /* Shaders */
+  NODE_SOCKET_API_ARRAY(array<Node *>, used_shaders)
+
   /* Set during device update. */
   bool intersects_volume;
 
@@ -104,6 +108,12 @@ class Object : public Node {
 
   /* Compute step size from attributes, shaders, transforms. */
   float compute_volume_step_size() const;
+
+  /* Attribute request set for object. */
+  AttributeRequestSet needed_attributes();
+
+  /* Set geometry as well as set the prototype object to get used shaders from. */
+  void set_geometry_and_prototype(Geometry *geometry);
 
  protected:
   /* Specifies the position of the object in scene->objects and
@@ -156,6 +166,7 @@ class ObjectManager {
                            Progress &progress,
                            bool bounds_valid = true);
   void device_update_geom_offsets(Device *device, DeviceScene *dscene, Scene *scene);
+  void device_update_used_shaders(DeviceScene *dscene, Scene *scene);
 
   void device_free(Device *device, DeviceScene *dscene, bool force_free);
 

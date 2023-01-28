@@ -22,12 +22,13 @@ KERNEL_DATA_ARRAY(DecomposedTransform, object_motion)
 KERNEL_DATA_ARRAY(uint, object_flag)
 KERNEL_DATA_ARRAY(float, object_volume_step)
 KERNEL_DATA_ARRAY(uint, object_prim_offset)
+KERNEL_DATA_ARRAY(uint, object_used_shaders)
 
 /* cameras */
 KERNEL_DATA_ARRAY(DecomposedTransform, camera_motion)
 
 /* triangles */
-KERNEL_DATA_ARRAY(uint, tri_shader)
+KERNEL_DATA_ARRAY(uint8_t, tri_shader_index)
 KERNEL_DATA_ARRAY(packed_float3, tri_vnormal)
 KERNEL_DATA_ARRAY(uint4, tri_vindex)
 KERNEL_DATA_ARRAY(uint, tri_patch)

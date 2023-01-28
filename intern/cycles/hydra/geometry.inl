@@ -104,7 +104,9 @@ void HdCyclesGeometry<Base, CyclesBase>::Sync(HdSceneDelegate *sceneDelegate,
       static_cast<Shader *>(shader)->tag_used(lock.scene);
     }
 
-    _geom->set_used_shaders(usedShaders);
+    for (Object *instance : _instances) {
+      instance->set_used_shaders(usedShaders);
+    }
   }
 
   const SdfPath &id = Base::GetId();
@@ -228,7 +230,10 @@ template<typename Base, typename CyclesBase>
 void HdCyclesGeometry<Base, CyclesBase>::InitializeInstance(int index)
 {
   Object *instance = _instances[index];
-  instance->set_geometry(_geom);
+  if (index == 0)
+    instance->set_geometry_and_prototype(_geom);
+  else
+    instance->set_geometry(_geom);
 
   instance->attributes.emplace_back(HdAovTokens->instanceId.GetString(),
                                     _instances.size() == 1 ? -1.0f : static_cast<float>(index));

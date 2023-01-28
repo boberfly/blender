@@ -242,8 +242,8 @@ bool GeometryManager::displace(Device *device, Scene *scene, Mesh *mesh, Progres
 
     for (size_t i = 0; i < num_triangles; i++) {
       int shader_index = mesh->shader[i];
-      Shader *shader = (shader_index < mesh->used_shaders.size()) ?
-                           static_cast<Shader *>(mesh->used_shaders[shader_index]) :
+      Shader *shader = (shader_index < mesh->get_used_shaders().size()) ?
+                           static_cast<Shader *>(mesh->get_used_shaders()[shader_index]) :
                            scene->default_surface;
 
       tri_has_true_disp[i] = shader->has_displacement &&

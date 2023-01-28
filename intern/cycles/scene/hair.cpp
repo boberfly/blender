@@ -10,6 +10,7 @@
 
 #include "integrator/shader_eval.h"
 
+#include "util/foreach.h"
 #include "util/progress.h"
 
 CCL_NAMESPACE_BEGIN
@@ -316,9 +317,9 @@ void Hair::reserve_curves(int numcurves, int numkeys)
   attributes.resize(true);
 }
 
-void Hair::clear(bool preserve_shaders)
+void Hair::clear()
 {
-  Geometry::clear(preserve_shaders);
+  Geometry::clear();
 
   curve_keys.clear();
   curve_radius.clear();
@@ -481,8 +482,8 @@ void Hair::pack_curves(Scene *scene,
   for (size_t i = 0; i < curve_num; i++) {
     Curve curve = get_curve(i);
     int shader_id = curve_shader[i];
-    Shader *shader = (shader_id < used_shaders.size()) ?
-                         static_cast<Shader *>(used_shaders[shader_id]) :
+    Shader *shader = (shader_id < get_used_shaders().size()) ?
+                         static_cast<Shader *>(get_used_shaders()[shader_id]) :
                          scene->default_surface;
     shader_id = scene->shader_manager->get_shader_id(shader, false);
 
@@ -553,7 +554,7 @@ static void read_shader_output(float *shadow_transparency,
 
 bool Hair::need_shadow_transparency()
 {
-  for (const Node *node : used_shaders) {
+  for (const Node *node : get_used_shaders()) {
     const Shader *shader = static_cast<const Shader *>(node);
     if (shader->has_surface_transparent && shader->get_use_transparent_shadow()) {
       return true;

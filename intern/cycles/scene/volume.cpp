@@ -4,6 +4,7 @@
 #include "scene/volume.h"
 #include "scene/attribute.h"
 #include "scene/image_vdb.h"
+#include "scene/object.h"
 #include "scene/scene.h"
 
 #ifdef WITH_OPENVDB
@@ -40,9 +41,9 @@ Volume::Volume() : Mesh(get_node_type(), Geometry::VOLUME)
   object_space = false;
 }
 
-void Volume::clear(bool preserve_shaders)
+void Volume::clear()
 {
-  Mesh::clear(preserve_shaders, true);
+  Mesh::clear();
 }
 
 struct QuadData {
@@ -662,7 +663,7 @@ void GeometryManager::create_volume_mesh(const Scene *scene, Volume *volume, Pro
    * empty grid or missing volume shader.
    * Also keep the shaders to avoid infinite loops when synchronizing, as this will tag the shaders
    * as having changed. */
-  volume->clear(true);
+  volume->clear();
   volume->need_update_rebuild = true;
 
   if (!volume_shader) {
@@ -747,8 +748,12 @@ void GeometryManager::create_volume_mesh(const Scene *scene, Volume *volume, Pro
   builder.create_mesh(vertices, indices, face_normals, face_overlap_avoidance);
 
   volume->reserve_mesh(vertices.size(), indices.size() / 3);
-  volume->used_shaders.clear();
-  volume->used_shaders.push_back_slow(volume_shader);
+  for (Object *object : scene->objects) {
+    if (object->get_geometry() == volume) {
+      object->used_shaders.clear();
+      object->used_shaders.push_back_slow(volume_shader);
+    }
+  }
 
   for (size_t i = 0; i < vertices.size(); ++i) {
     volume->add_vertex(vertices[i]);

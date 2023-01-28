@@ -173,7 +173,8 @@ class BlenderSync {
       BL::RenderSettings &b_render, BL::Object &b_ob, int width, int height, float motion_time);
 
   /* Geometry */
-  Geometry *sync_geometry(BL::Depsgraph &b_depsgraph,
+  Geometry *sync_geometry(Object *object,
+                          BL::Depsgraph &b_depsgraph,
                           BObjectInfo &b_ob_info,
                           bool object_updated,
                           bool use_particle_hair,

@@ -271,7 +271,7 @@ Object *BlenderSync::sync_object(BL::Depsgraph &b_depsgraph,
 
   /* mesh sync */
   Geometry *geometry = sync_geometry(
-      b_depsgraph, b_ob_info, object_updated, use_particle_hair, object_geom_task_pool);
+      object, b_depsgraph, b_ob_info, object_updated, use_particle_hair, object_geom_task_pool);
   object->set_geometry(geometry);
 
   /* special case not tracked by object update flags */
@@ -387,7 +387,7 @@ static float4 lookup_instance_property(BL::DepsgraphObjectInstance &b_instance,
 bool BlenderSync::sync_object_attributes(BL::DepsgraphObjectInstance &b_instance, Object *object)
 {
   /* Find which attributes are needed. */
-  AttributeRequestSet requests = object->get_geometry()->needed_attributes();
+  AttributeRequestSet requests = object->needed_attributes();
 
   /* Delete attributes that became unnecessary. */
   vector<ParamValue> &attributes = object->attributes;

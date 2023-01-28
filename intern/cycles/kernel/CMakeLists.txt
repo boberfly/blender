@@ -309,6 +309,7 @@ set(SRC_KERNEL_SAMPLE_HEADERS
 set(SRC_KERNEL_UTIL_HEADERS
   util/color.h
   util/differential.h
+  util/fetch_shader.h
   util/lookup_table.h
   util/profiling.h
 )

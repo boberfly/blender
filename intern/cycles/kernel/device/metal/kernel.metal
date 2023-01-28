@@ -219,7 +219,7 @@ bool metalrt_shadow_all_hit(constant KernelParamsMetal &launch_params_metal,
 
   /* If no transparent shadows, all light is blocked and we can stop immediately. */
   if (num_hits >= max_hits ||
-      !(context.intersection_get_shader_flags(NULL, prim, type) & SD_HAS_TRANSPARENT_SHADOW)) {
+      !(context.intersection_get_shader_flags(NULL, object, prim, type) & SD_HAS_TRANSPARENT_SHADOW)) {
     payload.result = true;
     /* terminate ray */
     return false;

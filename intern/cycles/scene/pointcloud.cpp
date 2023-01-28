@@ -121,9 +121,9 @@ void PointCloud::reserve(int numpoints)
   attributes.resize(true);
 }
 
-void PointCloud::clear(const bool preserve_shaders)
+void PointCloud::clear()
 {
-  Geometry::clear(preserve_shaders);
+  Geometry::clear();
 
   points.clear();
   radius.clear();
@@ -274,8 +274,8 @@ void PointCloud::pack(Scene *scene, float4 *packed_points, uint *packed_shader)
   for (size_t i = 0; i < numpoints; i++) {
     if (last_shader != shader_data[i]) {
       last_shader = shader_data[i];
-      Shader *shader = (last_shader < used_shaders.size()) ?
-                           static_cast<Shader *>(used_shaders[last_shader]) :
+      Shader *shader = (last_shader < get_used_shaders().size()) ?
+                           static_cast<Shader *>(get_used_shaders()[last_shader]) :
                            scene->default_surface;
       shader_id = scene->shader_manager->get_shader_id(shader);
     }

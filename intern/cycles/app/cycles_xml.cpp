@@ -393,7 +393,7 @@ static void xml_read_background(XMLReadState &state, xml_node node)
 
 /* Mesh */
 
-static Mesh *xml_add_mesh(Scene *scene, const Transform &tfm)
+static Object *xml_add_object(Scene *scene, const Transform &tfm)
 {
   /* create mesh */
   Mesh *mesh = new Mesh();
@@ -405,16 +405,17 @@ static Mesh *xml_add_mesh(Scene *scene, const Transform &tfm)
   object->set_tfm(tfm);
   scene->objects.push_back(object);
 
-  return mesh;
+  return object;
 }
 
 static void xml_read_mesh(const XMLReadState &state, xml_node node)
 {
-  /* add mesh */
-  Mesh *mesh = xml_add_mesh(state.scene, state.tfm);
-  array<Node *> used_shaders = mesh->get_used_shaders();
+  /* add object */
+  Object *object = xml_add_object(state.scene, state.tfm);
+  Mesh *mesh = static_cast<Mesh *>(object->get_geometry());
+  array<Node *> used_shaders = object->get_used_shaders();
   used_shaders.push_back_slow(state.shader);
-  mesh->set_used_shaders(used_shaders);
+  object->set_used_shaders(used_shaders);
 
   /* read state */
   int shader = 0;

@@ -63,7 +63,8 @@ array<Node *> BlenderSync::find_used_shaders(BL::Object &b_ob)
   return used_shaders;
 }
 
-Geometry *BlenderSync::sync_geometry(BL::Depsgraph &b_depsgraph,
+Geometry *BlenderSync::sync_geometry(Object *object,
+                                     BL::Depsgraph &b_depsgraph,
                                      BObjectInfo &b_ob_info,
                                      bool object_updated,
                                      bool use_particle_hair,
@@ -118,7 +119,7 @@ Geometry *BlenderSync::sync_geometry(BL::Depsgraph &b_depsgraph,
     }
     /* Test if shaders changed, these can be object level so geometry
      * does not get tagged for recalc. */
-    else if (geom->get_used_shaders() != used_shaders) {
+    else if (object->get_used_shaders() != used_shaders) {
       ;
     }
     else {
@@ -126,7 +127,7 @@ Geometry *BlenderSync::sync_geometry(BL::Depsgraph &b_depsgraph,
        * because the shader needs different geometry attributes. */
       bool attribute_recalc = false;
 
-      foreach (Node *node, geom->get_used_shaders()) {
+      foreach (Node *node, object->get_used_shaders()) {
         Shader *shader = static_cast<Shader *>(node);
         if (shader->need_update_geometry()) {
           attribute_recalc = true;
@@ -143,8 +144,9 @@ Geometry *BlenderSync::sync_geometry(BL::Depsgraph &b_depsgraph,
 
   geom->name = ustring(b_ob_info.object_data.name().c_str());
 
-  /* Store the shaders immediately for the object attribute code. */
-  geom->set_used_shaders(used_shaders);
+  /* Store the shaders immediately for the object attribute code and prototype. */
+  object->set_used_shaders(used_shaders);
+  geom->prototype = object;
 
   auto sync_func = [=]() mutable {
     if (progress.get_cancel())

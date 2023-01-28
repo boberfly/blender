@@ -75,7 +75,7 @@ ccl_device_inline void shader_setup_from_ray(KernelGlobals kg,
     if (sd->type == PRIMITIVE_TRIANGLE) {
       /* static triangle */
       float3 Ng = triangle_normal(kg, sd);
-      sd->shader = kernel_data_fetch(tri_shader, sd->prim);
+      sd->shader = triangle_fetch_shader(kg, sd->object, sd->prim);
 
       /* vectors */
       sd->P = triangle_point_from_uv(kg, sd, isect->object, isect->prim, isect->u, isect->v);

@@ -370,7 +370,7 @@ void HdCyclesMesh::PopulatePrimvars(HdSceneDelegate *sceneDelegate)
 void HdCyclesMesh::PopulateTopology(HdSceneDelegate *sceneDelegate)
 {
   // Clear geometry before populating it again with updated topology
-  _geom->clear(true);
+  _geom->clear();
 
   const HdDisplayStyle displayStyle = GetDisplayStyle(sceneDelegate);
   _topology = HdMeshTopology(GetMeshTopology(sceneDelegate), displayStyle.refineLevel);
@@ -394,7 +394,7 @@ void HdCyclesMesh::PopulateTopology(HdSceneDelegate *sceneDelegate)
 
   HdGeomSubsets const &geomSubsets = _topology.GetGeomSubsets();
   if (!geomSubsets.empty()) {
-    array<Node *> usedShaders = std::move(_geom->get_used_shaders());
+    array<Node *> usedShaders = std::move(_instances[0]->get_used_shaders());
     // Remove any previous materials except for the material assigned to the prim
     usedShaders.resize(1);
 
@@ -426,7 +426,9 @@ void HdCyclesMesh::PopulateTopology(HdSceneDelegate *sceneDelegate)
       }
     }
 
-    _geom->set_used_shaders(usedShaders);
+    for (Object *instance : _instances) {
+      instance->set_used_shaders(usedShaders);
+    }
   }
 
   const VtIntArray vertIndx = _topology.GetFaceVertexIndices();

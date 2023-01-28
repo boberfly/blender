@@ -466,8 +466,15 @@ typedef enum ShaderFlag {
                         SHADER_EXCLUDE_SHADOW_CATCHER),
 
   SHADER_MASK = ~(SHADER_SMOOTH_NORMAL | SHADER_CAST_SHADOW | SHADER_AREA_LIGHT | SHADER_USE_MIS |
-                  SHADER_EXCLUDE_ANY)
+                  SHADER_EXCLUDE_ANY),
+
+  SHADER_DEFAULT_SHADER = (SHADER_CAST_SHADOW | SHADER_AREA_LIGHT),
+
 } ShaderFlag;
+
+typedef enum ShaderCompactFlag {
+  SHADER_COMPACT_SMOOTH_NORMAL = (1 << 7),
+} ShaderCompactFlag;
 
 enum EmissionSampling {
   EMISSION_SAMPLING_NONE = 0,
@@ -1272,6 +1279,9 @@ typedef struct KernelObject {
 
   /* Volume velocity scale. */
   float velocity_scale;
+
+  int used_shaders_offset;
+  float pad[3];
 } KernelObject;
 static_assert_align(KernelObject, 16);
 
